@@ -1,30 +1,36 @@
-﻿{
-    "cd" : "edge",
-    "all_api" : ["baidu", "youdao", "sougou", "google", "edge"],
-    "edge":
-    {
-        "is_open" : 1,
-        "is_real_time_translate" : 1
+{
+    "cd": "edge",
+    "web_cd": "sougou",
+    "all_api": ["baidu", "youdao", "sougou", "deepl", "google", "edge"],
+    "edge": {
+        "scopes": ["api"],
+        "is_open": 1,
+        "is_real_time_translate": 1
     },
-    "youdao":
-    {
-        "is_open" : 0
+    "youdao": {
+        "scopes": ["api", "web"],
+        "is_open": 0
     },
-    "baidu" :
-    {
-        "is_open" : 0,
-        "BaiduFanyiAPPID" : "",
+    "baidu": {
+        "scopes": ["api", "web"],
+        "is_open": 0,
+        "BaiduFanyiAPPID": "",
         "BaiduFanyiAPPSEC": "",
-        "is_real_time_translate" : 0
+        "is_real_time_translate": 0
     },
-    "sougou" :
-    {
-        "is_open" : 1,
-        "is_real_time_translate" : 0
+    "sougou": {
+        "scopes": ["api", "web"],
+        "is_open": 1,
+        "is_real_time_translate": 0
     },
-    "google":
-    {
-        "is_open" : 0,
-        "is_real_time_translate" : 0
+    "google": {
+        "scopes": ["api"],
+        "is_open": 0,
+        "is_real_time_translate": 0
+    },
+    "deepl": {
+        "scopes": ["web"],
+        "is_open": 1,
+        "is_real_time_translate": 0
     }
 }
