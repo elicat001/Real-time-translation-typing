@@ -40,11 +40,15 @@ main()
     global g_all_api := AppConfig_GetEnabledServices(g_app_config, 'web')
     if (g_all_api.Length = 0)
     {
-        g_all_api := AppConfig_GetEnabledServices(g_app_config)
-    }
-    if (g_all_api.Length = 0)
-    {
-        g_all_api := ['sougou']
+        fallback_name := 'sougou'
+        g_all_api := [fallback_name]
+        meta := AppConfig_GetServiceMeta(g_app_config, fallback_name)
+        if !meta.Has('is_open')
+            meta['is_open'] := 1
+        if !meta.Has('is_real_time_translate')
+            meta['is_real_time_translate'] := 0
+        if !meta.Has('scopes')
+            meta['scopes'] := ['web']
         MsgBox('setting.json 未启用任何网页翻译服务，已回退到默认的搜狗翻译。')
     }
     global g_eb := Edit_box(0, 0, 1000, 100)

@@ -48,7 +48,11 @@ AppConfig_Save(config, json_path)
 AppConfig_GetServiceMeta(config, name)
 {
     if !config.Has(name)
-        return Map()
+    {
+        meta := Map()
+        config[name] := meta
+        return meta
+    }
 
     meta := config[name]
     if (Type(meta) = 'Map')
