@@ -2,6 +2,7 @@
 #include <Direct2DRender>
 #include <zmq>
 #include <log>
+#include ./utility/config_loader.ah2
 
 logger.is_log_open := false
 
@@ -20,9 +21,22 @@ main()
     global g_cursor_x := 0
     global g_cursor_y := 0
 
-    global g_config := Map()
-    loadconfig(&g_config, g_json_path)
-    global g_current_api := g_config['cd']
+    try
+    {
+        global g_config := AppConfig_Load(g_json_path)
+    }
+    catch as e
+    {
+        MsgBox('配置加载失败:`n' . e.Message)
+        ExitApp()
+    }
+
+    global g_current_api := AppConfig_ResolveDefaultService(g_config, 'api')
+    if (g_current_api = '')
+    {
+        MsgBox('setting.json 未启用任何 API 翻译服务，程序即将退出。')
+        ExitApp()
+    }
 
     g_eb.hide()
 	loop
@@ -69,23 +83,29 @@ send_command(p*)
 tab_send(*)
 {
     global g_current_api
-    ;找到当前index
-    current_index := 1
-    for k,v in g_config['all_api']
+    available := AppConfig_GetEnabledServices(g_config, 'api')
+    if (available.Length = 0)
     {
-        if(v = g_current_api)
+        ToolTip('未启用可用的翻译服务', g_cursor_x, g_cursor_y - 28, 1)
+        return
+    }
+
+    current_index := 1
+    for k, v in available
+    {
+        if (v = g_current_api)
         {
             current_index := k
             break
         }
     }
-    loop g_config['all_api'].Length
+    loop available.Length
     {
         current_index++
-        if(current_index > g_config['all_api'].Length)
+        if(current_index > available.Length)
             current_index := 1
-        api := g_config['all_api'][current_index]
-        if(g_config[api]['is_open'] && g_current_api != api)
+        api := available[current_index]
+        if(g_current_api != api)
         {
             g_current_api := api
             break
@@ -106,7 +126,8 @@ fanyi(*)
     g_cursor_x := x
     g_cursor_y := y
     tp := ''
-    if(g_config[g_current_api]['is_real_time_translate'] != 1)
+    meta := AppConfig_GetServiceMeta(g_config, g_current_api)
+    if(AppConfig_GetMetaValue(meta, 'is_real_time_translate', 1) != 1)
         tp := '非实时配置，需要空格触发, setting.json配置'
     ToolTip('[' g_current_api ']' tp, g_cursor_x, g_cursor_y - 28, 1)
     g_eb.show(x, y)
@@ -463,19 +484,6 @@ CreateHString(str)
 {
     DllCall("Combase\WindowsCreateString", "wstr", str, "uint", StrLen(str), "ptr*", &hString := 0, "HRESULT")
     return { Ptr: hString, __Delete: (_) => DllCall("Combase\WindowsDeleteString", "ptr", _, "HRESULT") }
-}
-
-loadconfig(&config, json_path)
-{
-    outputvar := FileRead(json_path)
-    config := JSON.parse(outputvar)
-}
-;保存配置函数
-saveconfig(config, json_path)
-{
-    str := JSON.stringify(config, 4)
-    FileDelete(json_path)
-    FileAppend(str, json_path, 'UTF-8')
 }
 
 EncodeDecodeURI(str, encode := true, component := true) {

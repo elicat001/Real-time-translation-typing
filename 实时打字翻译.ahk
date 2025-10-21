@@ -6,6 +6,7 @@
 #include <ComVar>
 #include <btt>
 #include <WinHttpRequest>
+#include ./utility/config_loader.ah2
 #include ./utility/网页翻译集合.ah2
 #include ./utility/sound.ah2
 #include ./utility/lol_game.ah2
@@ -26,8 +27,26 @@ main()
 main()
 {
     btt('加载中。。。',0, 0,,OwnzztooltipStyle1,{Transparent:180,DistanceBetweenMouseXAndToolTip:-100,DistanceBetweenMouseYAndToolTip:-20})
-    ;global g_all_api := ['youdao', 'sougou', 'deepl', 'baidu']
-    global g_all_api := ['sougou', 'deepl']
+    try
+    {
+        global g_app_config := AppConfig_Load(A_ScriptDir '\config\setting.json')
+    }
+    catch as e
+    {
+        MsgBox('配置加载失败:`n' . e.Message)
+        ExitApp()
+    }
+
+    global g_all_api := AppConfig_GetEnabledServices(g_app_config, 'web')
+    if (g_all_api.Length = 0)
+    {
+        g_all_api := AppConfig_GetEnabledServices(g_app_config)
+    }
+    if (g_all_api.Length = 0)
+    {
+        g_all_api := ['sougou']
+        MsgBox('setting.json 未启用任何网页翻译服务，已回退到默认的搜狗翻译。')
+    }
     global g_eb := Edit_box(0, 0, 1000, 100)
     global g_sound := SoundINput(A_ScriptDir '\lib\语音.html')
     global g_is_sound_mode := false
@@ -35,7 +54,7 @@ main()
     global g_is_ime_char := false
     global g_cursor_x := 0
     global g_cursor_y := 0
-    global g_current_api := g_all_api[1]
+    global g_current_api := AppConfig_ResolveDefaultService(g_app_config, 'web', g_all_api.Length ? g_all_api[1] : '')
     global g_window_hwnd := 0
     global g_is_input_mode := true
     global g_lol_api := Lcu()
@@ -742,19 +761,6 @@ CreateHString(str)
 {
     DllCall("Combase\WindowsCreateString", "wstr", str, "uint", StrLen(str), "ptr*", &hString := 0, "HRESULT")
     return { Ptr: hString, __Delete: (_) => DllCall("Combase\WindowsDeleteString", "ptr", _, "HRESULT") }
-}
-
-loadconfig(&config, json_path)
-{
-    outputvar := FileRead(json_path)
-    config := JSON.parse(outputvar)
-}
-;保存配置函数
-saveconfig(config, json_path)
-{
-    str := JSON.stringify(config, 4)
-    FileDelete(json_path)
-    FileAppend(str, json_path, 'UTF-8')
 }
 
 EncodeDecodeURI(str, encode := true, component := true) {
